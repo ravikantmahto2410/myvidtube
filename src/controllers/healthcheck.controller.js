@@ -15,11 +15,11 @@ import { asyncHandler } from "../utils/asynchandler.js";
     // }
 
     //but since i don't want to use this do try catch every single time ,I have an an asyncHandler built up
-    const helathcheck = asyncHandler( async(req , res) => {
+    const healthcheck = asyncHandler( async(req , res) => {
         return res
         .status(200)
         // .json( {message: "test ok"}) //but this is not an standard response , the standerd will be that we have done inApiresponse
         .json(new ApiResponse(200, "OK", "Health check passed"))
 
     })
-    export {helathcheck}
+    export {healthcheck}

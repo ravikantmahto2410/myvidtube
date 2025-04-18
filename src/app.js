@@ -18,5 +18,14 @@ app.use(express.json({limit: "16kb"})) //some of the middleware from the express
 app.use(express.urlencoded({extended: true, limit:"16kb"})) //this middleware is urlencoded. Do you wnat your data to be be coming in url encoded format
 app.use(express.static("public"))
 
+//we will bringin routes
+    //import routes
+    import healthcheckRouter from "./routes/healthcheck.route.js"
+
+
+
+    //routes
+    app.use("/api/v1/healthcheck",healthcheckRouter)  //
+
 
 export { app }
