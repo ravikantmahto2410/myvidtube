@@ -1,6 +1,6 @@
 import express from "express"
 import cors from "cors"
-
+import cookieParser from "cookie-parser" //this is where we have to handle the cookie part
 const app = express()
 
 //Once the app is being designed , only after that you can mention these Middlewares , Middlewares : Middlewares  are  in between configuration so that you can do certain things in between and cors is one of the middlewares
@@ -17,7 +17,7 @@ app.use( // all the middlewares are written like this
 app.use(express.json({limit: "16kb"})) //some of the middleware from the express itself , express has property of .json so that all the json data are allowed to come in , but we will limit the data , so that unlimited data are not allowed
 app.use(express.urlencoded({extended: true, limit:"16kb"})) //this middleware is urlencoded. Do you wnat your data to be be coming in url encoded format
 app.use(express.static("public"))
-
+app.use(cookieParser())
 //we will bringin routes
     //import routes
     import healthcheckRouter from "./routes/healthcheck.route.js"

@@ -84,15 +84,29 @@ userSchema.methods.isPasswordCorrect = async function(password){ //isPasswordCor
     //this is short lived access token
     return jwt.sign({
         _id: this._id,
-        email: this.email,
+        email: this.email, 
         username: this,username,
-        fullname: this.fullname
+        fullname: this.fullname  //note the accessToken may have the email, username, fullname or may not have. refreshToken have only one thing that is _id
     }, 
         // "shhhhh",  we can keep this as hard coded  but now we are going to process from the .env file
         process.env.ACCESS_TOKEN_SECRET,
 
         {expiresIn: process.env.ACCESS_TOKEN_EXPIRY}
     );
-  } 
+  }
+
+
+  userSchema.methods.generateRefreshToken = function (){
+    //this is long lived access token
+    return jwt.sign({
+        _id: this._id, //refreshToken have only one information so that we can update the fields
+    }, 
+        // "shhhhh",  we can keep this as hard coded  but now we are going to process from the .env file
+        process.env.REFRESH_TOKEN_SECRET,
+
+        {expiresIn: process.env.REFRESH_TOKEN_EXPIRY}
+    );
+    //we will make the database queries if the refreshToken is not even present then we don't allow the access token to get refreshed , and we can force logout based on this refreshToken, because they are stored in the database
+  }
 
 export const User = mongoose.model("User", userSchema) //The whole idea is in the mongoDB, the mongoose is going to go ahead and create a document with this structure, if this document does't exist it's going to go ahead and create that. and while creating the document it will create the mongoose feature , Mongoose is saying that hey mongoose , i want to build a model, new structure and a new document in my database . that document will be called as User and the schema structure that my database is going to follow , i will refer to this user schema ,which is mentioned at line 17. we are also exporting because whenever i will need , i can actually import this model , and not just this model  but all the features of mongoDb , like quering database , finding an element or saving any new data in the database, al these features are exported because now User  is not an ordinary variable , but avaribale that is designed by mongoose and especially the model of the mongoose 
