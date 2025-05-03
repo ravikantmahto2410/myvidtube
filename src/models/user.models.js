@@ -62,7 +62,7 @@ userSchema.pre("save", async function(next){ //pre means before saving. //Save i
     
     // if(this.modified("password")){ }//this will notify whether the things are modified /..This line basically says that if the password field is modifying then only encrypt
     
-    if(!this.modified("password")) return next//this will notify whether the things are modified /..This line basically says that if the password field is not modifyied then simply just return next 
+    if(!this.isModified("password")) return next()//this will notify whether the things are modified /..This line basically says that if the password field is not modifyied then simply just return next 
 
     this.password = bcrypt.hash(this.password, 10) //our password is encrypted
 
