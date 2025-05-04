@@ -85,7 +85,7 @@ userSchema.methods.isPasswordCorrect = async function(password){ //isPasswordCor
     return jwt.sign({
         _id: this._id,
         email: this.email, 
-        username: this,username,
+        username: this.username,
         fullname: this.fullname  //note the accessToken may have the email, username, fullname or may not have. refreshToken have only one thing that is _id
     }, 
         // "shhhhh",  we can keep this as hard coded  but now we are going to process from the .env file

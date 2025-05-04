@@ -4,7 +4,25 @@ import { User } from "../models/user.models.js"
 import { uploadOnCloudinary, deleteFromCloudinary} from "../utils/cloudinary.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 
-
+const generateAccessAndRefreshToken = async (userId) => {//if we dont have userId we cant do query to the database
+    try {
+        //first step is to simply fire up a query, so that i can find the user
+        const user = await User.findById(userId);
+    
+        //Small HW: small check for user existence
+    
+        //now lets generate accessToken
+        const accessToken = user.generateAccessToken()
+        const refreshToken = user.generateRefreshToken()
+    
+        user.refreshToken = refreshToken
+        await user.save({validateBeforeSave: false})
+    
+        return{accessToken, refreshToken}
+    } catch (error) {
+        throw new ApiError(500, "Something went wrong while generating access and refresh tokens")
+    }
+}
 const registerUser =  asyncHandler(async (req, res) => {
     const {fullname, email, username, password} = req.body //we need to destructure whatever is coming from the frontend side            //we are also accepting the images , but those are not coming in the request body they are coming in the req.files , that is what injected by the multer
 
@@ -24,7 +42,7 @@ const registerUser =  asyncHandler(async (req, res) => {
     // User.findOne({email}) //in case i want to find the user based on only on email
     // User.findOne({username}) //I can also find the user based on only on username
 
-     const existedUser = await User.findOne({ //we can also mongoDB operators  to find the user
+    const existedUser = await User.findOne({ //we can also mongoDB operators  to find the user
         $or: [{username},{email}]
     })
 
@@ -86,9 +104,9 @@ const registerUser =  asyncHandler(async (req, res) => {
             throw new ApiError(500, "Something went wrong while registering the user")
         }
         return res 
-        .status(201)
-        .json(new ApiResponse(200), createdUser,"User registered successfully")
-    } catch (error) {
+            .status(201)
+            .json(new ApiResponse(200), createdUser,"User registered successfully")
+        } catch (error) {
         console.log("User creation failed")
 
         if (avatar){
@@ -104,6 +122,66 @@ const registerUser =  asyncHandler(async (req, res) => {
 
 })
 
+const loginUser = asyncHandler( async( req, res) => {
+    //getData from the body
+    const {email, username, password} = req.body
+
+    //validation
+    if(!email){ //we can also check with other fields
+        throw new ApiError(400, "Email is required")
+    }
+
+    const user = await User.findOne({ //we can also use  mongoDB operators  to find the user
+        $or: [{username},{email}]
+    })
+
+    if(!user) {
+        throw new ApiError(404, "User not found")
+    }
+
+    //validate password
+    const isPasswordValid = await user.isPasswordCorrect(password) 
+
+    if(!isPasswordValid) {
+        throw new ApiError(401, "Invalid Credentials")
+    }
+
+    //if the password is correct, now is the time to generate or take help from our helper method to generate the acessToken and refreshToken
+    const {accessToken, refreshToken} = await generateAccessAndRefreshToken(user._id)
+    
+    const loggedInUser = await User.findById(user._id)
+        .select("-password -refreshToken ")
+    //now the result that comes to us after this loggedInUser query is going to be a userObject which doesn't have the the password field and refreshToken
+
+
+    //exercise : checkIn whether we have loggedinUser or not
+    //HW  solving
+    // if(!loggedInUser){
+    //     throw new ApiError(403,"Not a loggedInUser");
+    // }
+
+    const options = {
+        httpOnly: true, //this makes the cookie non-modifiable by the client side
+        secure : process.env.NODE_ENV === "production",
+
+    }
+
+    return res
+        .status(200)
+        .cookie("accessToken", accessToken, options)
+        .cookie("refreshToken", refreshToken, options)
+        // .json(new ApiResponse(200,loggedInUser, "User logged in successfully"))
+
+        //we can also send the response like this
+        .json(new ApiResponse(
+            200,
+            { user: loggedInUser, accessToken, refreshToken},
+            "User logged in successfully"
+        ))
+
+})
+
 export {
-    registerUser
+    registerUser,
+    loginUser
 }
