@@ -186,9 +186,26 @@ const logoutUser = asyncHandler(async (req, res) => { //this is simple method wh
     //true logout means we have to remove the refreshToken part  
     
     await User.findByIdAndUpdate(
-        //TODO : need to come back here after middleware
+        req.user._id,
+        {
+            $set: {
+                refreshToken: undefined,
+            }
+        },
+        {new: true}
+
     ) //why update because  i don't want to remove the entire record , just update one field in the database
 
+    const options = {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+    }
+
+    return res
+        .status(200)
+        .clearCookie("accessToken", options) //remember when we dont pass the options , it doesn't set it to anything , jsut refresh everything
+        .clearCookie("refreshToken", options)
+        .json(new ApiResponse(200, {}, "User logged out successfully"))
 })
 
 const refreshAccessToken = asyncHandler(async (req, res) => { //this is designed so that you can have new fresh set of accessToken being generated
@@ -250,5 +267,6 @@ const refreshAccessToken = asyncHandler(async (req, res) => { //this is designed
 export {
     registerUser,
     loginUser,
-    generateAccessAndRefreshToken
+    generateAccessAndRefreshToken,
+    logoutUser
 }
