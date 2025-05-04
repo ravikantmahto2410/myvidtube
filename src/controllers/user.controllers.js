@@ -182,6 +182,14 @@ const loginUser = asyncHandler( async( req, res) => {
 
 })
 
+const logoutUser = asyncHandler(async (req, res) => { //this is simple method which we don't need to return anything ,most important thing is we have something in the database that needs to be changed 
+    //true logout means we have to remove the refreshToken part  
+    
+    await User.findByIdAndUpdate(
+        //TODO : need to come back here after middleware
+    ) //why update because  i don't want to remove the entire record , just update one field in the database
+
+})
 
 const refreshAccessToken = asyncHandler(async (req, res) => { //this is designed so that you can have new fresh set of accessToken being generated
     //step 1 : is first of all go ahead and collect that incoming refresh token 
