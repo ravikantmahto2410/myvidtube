@@ -1,5 +1,5 @@
 import { ApiResponse } from "../utils/ApiResponse.js";
-import { asyncHandler } from "../utils/asynchandler.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
 
 //create healthcheck
     //usual common practise
