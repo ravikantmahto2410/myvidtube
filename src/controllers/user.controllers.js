@@ -264,9 +264,272 @@ const refreshAccessToken = asyncHandler(async (req, res) => { //this is designed
 
 })
 
+const changeCurrentPassword = asyncHandler(async (req, res) => {
+    const {oldPassword, newPassword} = req.body
+
+    //Now I have to make sure that i have the access of  the currentUser and we can find that from the middleware
+    const user = await User.findById(req.user?._id)
+
+    //now since we have  access to the user who is loggedIn and we have also access to the oldPassword
+    const isPasswordValid = await user.isPasswordCorrect(oldPassword)
+
+    if(!isPasswordValid) {
+        throw new ApiError(401, "Old Password is incorrect")
+    }
+
+    user.password = newPassword //this is updating the password
+
+    await user.save({validateBeforeSave: false})
+    return res
+        .status(200)
+        .json( new ApiResponse(
+            200,
+            {}, 
+            "Password changed successFully"
+        )
+    )
+
+})
+
+const getCurrentUser = asyncHandler( async (req, res) => {
+    return res
+        .status(200)
+        .json( new ApiResponse(200, req.user, "Current user details"))
+})
+
+
+
+const updateAccountDetails = asyncHandler( async (req, res) => {
+    //This is the point to decide what kind of updation you are accepting
+    const {fullname, email} = req.body //since we don't want to update the username so we are writing that inside the curly braces
+    
+    //if we are changing both the fields we need to have access to both the fields
+    if(!fullname){
+        throw new ApiError(400, "Fullname is required")
+    }
+
+    if(!email) {
+        throw new ApiError(400, "Email is required")
+    }
+
+    User.findById().select("-password")
+
+    
+
+    const user = await User.findByIdAndUpdate(
+       req.user?._id,//the first parameter always is , how I am going to access the user 
+       {//the second parameter is  usually an object and we want to update some field so we want to set some parameters
+            $set:{
+                fullname,
+                email: email
+            }
+       },
+       {new:true}//because we want that updated information should come
+    ).select("-password -refreshToken")
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, user, "Account details updated successfully"))
+})
+
+const updateUserAvatar = asyncHandler( async (req, res) => {
+    const avatarLocalPath = req.file?.path
+
+    if(!avatarLocalPath) {
+        throw new ApiError(400, "File is required")
+    }
+    
+    //now after that i can just update it in cloudinary
+    const avatar = await uploadOnCloudinary(avatarLocalPath)
+
+    if (!avatar.url) {
+        throw new ApiError(500, "Something went wrong while uploading the avatar")
+        
+    }
+
+    const user = await User.findByIdAndUpdate(
+        req.user?._id,
+        {
+            $set: {
+                avatar: avatar.url
+            }
+        },
+        {new : true}
+    ).select("-password -refreshToken")
+
+    res.status(200).json( new ApiResponse(200, user, "Avatar updated successfully"))
+
+
+})
+
+const updateUserCoverImage = asyncHandler(async (req, res) => {
+    const coverImageLocalPath = req.file?.path
+
+    if(!coverImageLocalPath) {
+        throw new ApiError(400, "File is required")
+    }
+
+    const coverImage = await uploadOnCloudinary(coverImageLocalPath)
+
+    if(!coverImage.url) {
+        throw new ApiError(500, "Something went wrong while uploading cover image")
+    }
+
+    const user = await User.findByIdAndUpdate(
+        req.user?._id,
+        {
+            $set: {
+                coverImage: coverImage.url
+            }
+        },
+        {new: true}
+    ).select("-password -refreshToken")
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, user, "Cover Image updated successfully"))
+
+
+})
+
+const getUserChannelProfile = asyncHandler(async (req,res) => { //this controller is  dependent on aggregation pipeline
+    const { username } = req.params
+
+    if(!username?.trim()){
+        throw new ApiError(400, "Username is required ")
+    }
+
+    const channel = await User.aggregate(
+        [
+            {
+                $match: { //we have matched the user
+                    username: username?.toLowerCase()
+                }
+            },
+            {
+                $lookup: {
+                    from: "subscriptions",  //provide the name of the model from which you want to lookup
+                    localField: "_id",
+                    foreignField: "channel",
+                    as: "subscribers"
+                }
+            },
+            {
+                $lookup: {
+                    from: "subscriptions",
+                    localField : "_id",
+                    foreignField: "subscriber",
+                    as: "subscribedTo"
+                }
+            },
+            {
+                $addFields: {
+                    subscribersCount: { //this will count me all the subscribers that I have
+                        $size: "$subscribers"
+
+                    },
+                    channelsSubscribedToCount: {
+                        $size: "$subscribedTo"
+                    },
+                    isSubscribed: {
+                        $cond: {
+                            if: {
+                                $in: [request.user?._id, "$subscribers.subscriber"]
+                            },
+                            then: true,
+                            else: false
+                        }
+                    }
+                        
+                    
+                }
+            },
+            {
+                //Project only the necessary data
+                $project: {
+                    fullname: 1,
+                    username: 1,
+                    avatar: 1,
+                    subscriberCount: 1,
+                    channelSubscribedToCount: 1,
+                    isSubscribed: 1,
+                    coverImage: 1,
+                    email: 1,
+                }
+            }
+        ]
+    )
+
+    if(!channel?.length){
+        throw new ApiError(404, "channel not found")
+    }
+
+    return res.status(200).json( new ApiResponse(
+        200,
+        channel[0],
+        "channel profile fetched successfully"
+    ))
+
+
+})
+const getWatchHistory = asyncHandler( async (req, res) => {
+    const user = await User.aggregate([
+        {
+            $match: {
+                _id: new mongoose.Types.ObjectId(req.user?._id)
+            }
+        },
+        {
+            $lookup: {
+                from: "videos",
+                localField: "watchHistory",
+                foreignField: "_id",
+                as: "watchHistory",
+                pipeline: [
+                    {
+                        $lookup: {
+                            from: "users",
+                            localField: "owner",
+                            foreignField:"_id",
+                            as: "owner",
+                            pipeline: [
+                                {
+                                    $project: {
+                                        fullname: 1,
+                                        username: 1,
+                                        avatar: 1
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        $addFields: {
+                            owner: {
+                                $first: "$owner"
+                            }
+                        }
+                    }
+                ]
+                
+            }
+        }
+    ])
+
+    return res.status(200).json( new ApiResponse(200, user[0]?.getWatchHistory,
+        "watch history fetched successfully"
+    ))
+})
+
 export {
     registerUser,
     loginUser,
     generateAccessAndRefreshToken,
-    logoutUser
+    logoutUser,
+    getCurrentUser,
+    updateAccountDetails,
+    updateUserAvatar,
+    updateUserCoverImage,
+    getUserChannelProfile,
+    getWatchHistory
 }
