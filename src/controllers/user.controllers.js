@@ -1,4 +1,4 @@
-import { asyncHandler } from "../utils/asynchandler.js"
+import { asyncHandler } from "../utils/asyncHandler.js"
 import { ApiError} from "../utils/ApiError.js"
 import { User } from "../models/user.models.js"
 import { uploadOnCloudinary, deleteFromCloudinary} from "../utils/cloudinary.js"
@@ -525,6 +525,8 @@ export {
     registerUser,
     loginUser,
     generateAccessAndRefreshToken,
+    refreshAccessToken,
+    changeCurrentPassword,
     logoutUser,
     getCurrentUser,
     updateAccountDetails,
