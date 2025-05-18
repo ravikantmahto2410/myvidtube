@@ -434,7 +434,7 @@ const getUserChannelProfile = asyncHandler(async (req,res) => { //this controlle
                     isSubscribed: {
                         $cond: {
                             if: {
-                                $in: [request.user?._id, "$subscribers.subscriber"]
+                                $in: [req.user?._id, "$subscribers.subscriber"]
                             },
                             then: true,
                             else: false
@@ -450,7 +450,7 @@ const getUserChannelProfile = asyncHandler(async (req,res) => { //this controlle
                     fullname: 1,
                     username: 1,
                     avatar: 1,
-                    subscriberCount: 1,
+                    subscribersCount: 1,
                     channelSubscribedToCount: 1,
                     isSubscribed: 1,
                     coverImage: 1,
@@ -472,6 +472,7 @@ const getUserChannelProfile = asyncHandler(async (req,res) => { //this controlle
 
 
 })
+
 const getWatchHistory = asyncHandler( async (req, res) => {
     const user = await User.aggregate([
         {
@@ -516,7 +517,7 @@ const getWatchHistory = asyncHandler( async (req, res) => {
         }
     ])
 
-    return res.status(200).json( new ApiResponse(200, user[0]?.getWatchHistory,
+    return res.status(200).json( new ApiResponse(200, user[0]?.watchHistory,
         "watch history fetched successfully"
     ))
 })
