@@ -395,11 +395,11 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
 
 const getUserChannelProfile = asyncHandler(async (req,res) => { //this controller is  dependent on aggregation pipeline
     const { username } = req.params
-
+    console.log("Requested username:", username);
     if(!username?.trim()){
         throw new ApiError(400, "Username is required ")
     }
-
+    
     const channel = await User.aggregate(
         [
             {
@@ -460,11 +460,11 @@ const getUserChannelProfile = asyncHandler(async (req,res) => { //this controlle
             }
         ]
     )
-
+    console.log("Aggregation result:", channel);
     if(!channel?.length){
         throw new ApiError(404, "channel not found")
     }
-
+    
     return res.status(200).json( new ApiResponse(
         200,
         channel[0],
