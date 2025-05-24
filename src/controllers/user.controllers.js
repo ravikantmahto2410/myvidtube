@@ -99,24 +99,25 @@ const registerUser =  asyncHandler(async (req, res) => {
             username: username.toLowerCase()
         })
     
-        //assuming we have interacted with the user and we have created a user in the database now we want to verify whether this user was created on the database or not 
-        const createdUser = await User.findById(user._id).select("-password -refreshToken") 
+            //assuming we have interacted with the user and we have created a user in the database now we want to verify whether this user was created on the database or not 
+            const createdUser = await User.findById(user._id).select("-password -refreshToken") 
         
-        if(!createdUser){
-            throw new ApiError(500, "Something went wrong while registering the user")
-        }
-        return res 
-            .status(201)
-            .json(new ApiResponse(200), createdUser,"User registered successfully")
-        } catch (error) {
+            if(!createdUser){
+                throw new ApiError(500, "Something went wrong while registering the user")
+            }
+            return res 
+                .status(201)
+                .json(new ApiResponse(200), createdUser,"User registered successfully")
+
+    } catch (error) {
         console.log("User creation failed")
 
         if (avatar){
-            await deleteFromCloudinary(avatar.publicId)
+            await deleteFromCloudinary(avatar.public_id)
 
         }
         if (coverImage) {
-            await deleteFromCloudinary(coverImage.publicId)
+            await deleteFromCloudinary(coverImage.public_id)
         }
 
         throw new ApiError(500, "Something went wrong while registering the user and images were deleted")
@@ -395,7 +396,7 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
 
 const getUserChannelProfile = asyncHandler(async (req,res) => { //this controller is  dependent on aggregation pipeline
     const { username } = req.params
-    console.log("Requested username:", username);
+    // console.log("Requested username:", username);
     if(!username?.trim()){
         throw new ApiError(400, "Username is required ")
     }
@@ -405,6 +406,7 @@ const getUserChannelProfile = asyncHandler(async (req,res) => { //this controlle
             {
                 $match: { //we have matched the user
                     username: username?.toLowerCase()
+          
                 }
             },
             {
@@ -460,7 +462,7 @@ const getUserChannelProfile = asyncHandler(async (req,res) => { //this controlle
             }
         ]
     )
-    console.log("Aggregation result:", channel);
+    // console.log("Aggregation result:", channel);
     if(!channel?.length){
         throw new ApiError(404, "channel not found")
     }
