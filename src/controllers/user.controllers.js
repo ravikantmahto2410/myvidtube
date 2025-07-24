@@ -315,13 +315,12 @@ const updateAccountDetails = asyncHandler( async (req, res) => {
     }
 
     User.findById().select("-password")
-
     
 
     const user = await User.findByIdAndUpdate(
        req.user?._id,//the first parameter always is , how I am going to access the user 
        {//the second parameter is  usually an object and we want to update some field so we want to set some parameters
-            $set:{
+            $set:{ //what objects you want to update
                 fullname,
                 email: email
             }
@@ -365,7 +364,8 @@ const updateUserAvatar = asyncHandler( async (req, res) => {
 })
 
 const updateUserCoverImage = asyncHandler(async (req, res) => {
-    const coverImageLocalPath = req.file?.path
+    const coverImageLocalPath = req.file?.path //only file and not files because we are updating
+                                             //or handling only single file
 
     if(!coverImageLocalPath) {
         throw new ApiError(400, "File is required")
