@@ -1,4 +1,4 @@
-import mongoose, {isValidObjectId} from "mongoose";
+import mongoose, {isValidObjectId, set} from "mongoose";
 import {Video} from "../models/video.models.js";
 import { User } from "../models/user.models.js";
 import { ApiError } from "../utils/ApiError.js";
@@ -243,6 +243,22 @@ const deleteVideo = asyncHandler(async (req, res) => {
 
 const togglePublishStatus = asyncHandler(async (req, res) => {
     const { videoId } = req.params
+
+    if(!videoId || !mongoose.Types.ObjectId.isValid(videoId)){
+        throw new ApiError(404, "Video Id not found")
+    }
+
+    const video = await Video.findById(videoId)
+    if(!video){
+        throw new ApiError(404, 'Video is not found')
+    }
+
+    video.isPublished = !video.isPublished
+    await video.save()
+
+    return res 
+        .status(200)
+        .json(new ApiResponse(200, video, "Video Toggled Successfully"))
 })
 
 
@@ -251,6 +267,7 @@ export {
     publishAVideo,
     getVideoById,
     updateVideo,
-    deleteVideo
+    deleteVideo,
+    togglePublishStatus
 }
 
