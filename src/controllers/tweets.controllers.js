@@ -121,7 +121,7 @@ const updateTweet = asyncHandler(async (req, res) => {
     }
     return res 
         .status(200)
-        .json(new ApiResponse(200, newTweet, "tweetUpdated successfully"))
+        .json(new ApiResponse(200, newTweet, "tweetUpdated success"))
         
     
 
@@ -129,6 +129,20 @@ const updateTweet = asyncHandler(async (req, res) => {
 
 const deleteTweet = asyncHandler(async (req, res) => {
     //TODO: delete tweet
+    const {tweetId} = req.params
+
+    if(!tweetId || !mongoose.Types.ObjectId.isValid(tweetId)){
+        throw ApiError(401, "TweetId not found")
+    }
+
+    const tweetDel = await Tweet.findByIdAndDelete(tweetId);
+    if(!tweetDel){
+        throw new ApiError(404, "tweet not deleted")
+    }
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, "tweet deleted successfully"))
 })
 
 export {
