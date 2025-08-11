@@ -95,6 +95,36 @@ const getUserTweets = asyncHandler(async (req, res) => {
 
 const updateTweet = asyncHandler(async (req, res) => {
     //TODO: update tweet
+    const {tweetId} = req.params
+    const {newcontent} = req.body
+
+    if(!newcontent?.trim()){
+        throw new ApiError(400, "content is required ")
+    }
+
+    if(!tweetId || !mongoose.Types.ObjectId.isValid(tweetId)){
+        throw new ApiError(400, "tweetId is invalid ")
+    }
+
+    const newTweet = await Tweet.findByIdAndUpdate(
+        tweetId,
+        {
+            $set : {
+                content : newcontent
+            }
+        },
+        {new: true}
+    )
+
+    if(!newTweet){
+        throw ApiError(404, "newTweet not updated")
+    }
+    return res 
+        .status(200)
+        .json(new ApiResponse(200, newTweet, "tweetUpdated successfully"))
+        
+    
+
 })
 
 const deleteTweet = asyncHandler(async (req, res) => {
