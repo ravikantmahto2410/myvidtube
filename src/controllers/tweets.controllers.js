@@ -64,23 +64,18 @@ const getUserTweets = asyncHandler(async (req, res) => {
             
             }
         },
-
         {
             $unwind: "$usertweets",
         },
-        {
-            
+        {  
             $project : {
                 
                 username: "$usertweets.username",
                 createdAt:1,
                 updatedAt:1,
                 content:1
-
             }
-            
         }
-
     ])
     console.log(alltweets)
     if(!alltweets){

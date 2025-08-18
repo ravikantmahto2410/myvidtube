@@ -25,12 +25,14 @@ app.use(cookieParser())
     import videoRouter from "./routes/video.route.js"
     import { errorHandler } from "./middlewares/error.middlewares.js"
     import tweetRouter from "./routes/tweet.routes.js"
+    import subscriptionRouter from "./routes/subscription.routes.js"
 
     //routes
     app.use("/api/v1/healthcheck",healthcheckRouter)  //
     app.use("/api/v1/users",userRouter)
     app.use("/api/v1/videos",videoRouter)
     app.use("/api/v1/tweets",tweetRouter)
+    app.use("/api/v1/subscriptions",subscriptionRouter)
 
 
 
