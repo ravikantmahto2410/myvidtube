@@ -3,6 +3,7 @@ import { asyncHandler } from "../utils/asyncHandler.js"
 import { Like } from "../models/like.models.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 import { ApiError } from "../utils/ApiError.js"
+import { Tweet } from "../models/tweet.models.js"
 
 
 const toggleVideoLike = asyncHandler(async (req, res) => {
@@ -44,6 +45,30 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
 const toggleTweetLike = asyncHandler(async (req, res) => {
     const {tweetId} = req.params
     //TODO: toggle like on tweet
+    if(!tweetId || !mongoose.Types.ObjectId.isValid(tweetId)){
+        throw new ApiError(401, "invalid tweetId")
+    }
+
+    const isTweetLiked = await Like.findOne({
+        likedBy : req.user?._id,
+        tweet : tweetId
+    })
+
+    if(isTweetLiked){
+        const deleteTweet = await Like.findByIdAndDelete(isTweetLiked._id)
+        return res 
+            .status(200)
+            .json(new ApiResponse(200, deleteTweet, "tweetlike deleted successfully"))
+    }
+
+    const tweetLike = await Like.create({
+        likedBy : req.user?._id,
+        tweet : tweetId
+    })
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, tweetLike, "tweetLike created successfully"))
 }
 )
 
