@@ -108,15 +108,49 @@ const getUserChannelSubscribers = asyncHandler(async(req ,res) => {
 })
 
 const getSubscribedChannels = asyncHandler(async(req, res) => {
-    // const {subscribedId} = req.params
+    const {channelId} = req.params
 
-    // if(!subscribedId || mongoose.Types.ObjectId.isValid(subscribedId)){
-    //     throw new ApiError(402, "subscribedId is required")
-    // }
+    if(!mongoose.Types.ObjectId.isValid(channelId)){
+        throw new ApiError(402, "subscribedId is required")
+    }
 
-    // const subscribedChannels = await Subscription.aggregate([
+    const subscribedChannels = await Subscription.aggregate([
+        {
+            $match: {
+                subscriber : new mongoose.Types.ObjectId(channelId)
+            }
+        },
+        {
+            $lookup: {
+                from: "users",
+                localField: "channel",
+                foreignField : "_id",
+                as: "subscribedChannels",
+                pipeline: [
+                    {
+                        $project: {
+                            fullName: 1,
+                            username: 1,
+                            avatar: 1,
+                        },
+                    },
+                ],
+            }
+        },
+        {
+            $addFields:{
+                subscribedChannels :{
+                    $arrayElemAt: ["$subscribedChannels",0]
+                }
+            }
+        },
         
-    // ]) 
+    
+    ]) 
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, subscribedChannels, "Fetched subscribed to channel list"))
 })
 
 export {
