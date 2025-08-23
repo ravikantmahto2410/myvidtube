@@ -40,6 +40,10 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
     const {commentId} = req.params
     //TODO: toggle like on comment
 
+    if(!commentId || !mongoose.Types.ObjectId.isValid(commentId)){
+        throw new ApiError(402,  "commentId not found");
+    }
+
 })
 
 const toggleTweetLike = asyncHandler(async (req, res) => {
@@ -69,11 +73,47 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
     return res
         .status(200)
         .json(new ApiResponse(200, tweetLike, "tweetLike created successfully"))
-}
-)
+})
 
 const getLikedVideos = asyncHandler(async (req, res) => {
     //TODO: get all liked videos
+
+    const likedVideoDetails = await Like.aggregate([
+    {
+      $match: {
+        likedBy: new mongoose.Types.ObjectId(req.user.id),
+      },
+    },
+    {
+      $lookup: {
+        from: "videos",
+        foreignField: "_id",
+        localField: "video",
+        as: "likeVideoData",
+      },
+    },
+    {
+      $unwind: "$likeVideoData",
+    },
+    {
+      $project: {
+        _id: 0,
+        video: "$likeVideoData",
+      },
+    },
+  ]);
+
+  console.log("liked videos :", likedVideoDetails);
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        "fetched liked videos successfully",
+        likedVideoDetails
+      )
+    );
 })
 
 export {
