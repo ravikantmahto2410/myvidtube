@@ -27,6 +27,7 @@ app.use(cookieParser())
     import tweetRouter from "./routes/tweet.routes.js"
     import subscriptionRouter from "./routes/subscription.routes.js"
     import likeRouter from "./routes/like.route.js"
+    import commentRouter from "./routes/comment.route.js"
     //routes
     app.use("/api/v1/healthcheck",healthcheckRouter)  //
     app.use("/api/v1/users",userRouter)
@@ -34,7 +35,7 @@ app.use(cookieParser())
     app.use("/api/v1/tweets",tweetRouter)
     app.use("/api/v1/subscriptions",subscriptionRouter)
     app.use("/api/v1/likes",likeRouter)
-
+    app.use("/api/v1/comment", commentRouter)
 
     app.use(errorHandler)
 export { app }
